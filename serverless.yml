@@ -1,0 +1,87 @@
+service: severless
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  profile: user1
+  region: us-east-1
+  environment:
+    TABLE_NAME: ${self:custom.tableName}
+    BUCKET_NAME: ${self:custom.bucketName}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:*
+            - s3:*
+          Resource: '*'
+  apiGateway:
+    apiKeys:
+     - MyFirstApiKey
+
+custom:
+  tableName: player-points  
+  bucketName: mybucket-117 
+
+functions:
+  getUser:
+    handler: Lambda/endpoints/getUser.handler
+    events: 
+      - http:
+          path: get-user/{ID}
+          method: GET
+          cors: true
+          private: true
+  getPlayerScore:
+    handler: Lambda/endpoints/getPlayerScore.handler
+    events: 
+      - http:
+          path: get-player-score/{ID}
+          method: GET
+          cors: true
+  createPlayerScore:
+    handler: Lambda/endpoints/createPlayerScore.handler
+    events: 
+      - http:
+          path: create-player-score/{ID}
+          method: POST
+          cors: true
+
+  createFile:
+    handler: Lambda/endpoints/createFile.handler
+    events: 
+      - http:
+          path: create-file/{fileName}
+          method: POST
+          cors: true
+  getFile:
+    handler: Lambda/endpoints/getFile.handler
+    events: 
+      - http:
+          path: get-file/{fileName}
+          method: GET
+          cors: true
+    
+
+resources:
+  Resources:
+    DemoBucketUpload:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucketName}
+
+    MyDynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.tableName}
+        AttributeDefinitions:
+          - AttributeName: ID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: ID
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+
